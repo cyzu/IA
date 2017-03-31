@@ -7,20 +7,13 @@
 #include "util.h"
 #include "pile.h"
 
+
 extern int sommet_courant;
-//Pile pile[MAX_PILE];
 _Pile solutions[MAX_PILE];
 int flag_pigeon = 1;
 int flag_all = 0;
 int cmpt_sol = 0;
 
-/*  666
- * 6     
- * 6
- * 66666
- * 6    6
- * 6    6
- *  6666   AVRIL evaluation*/
 
 /* fonction qui initialise les tables domaines et variables disponibles à 1 */
 void init_tables_disponibles (Csp *csp, int domaines_disponibles[], int var_val[]){
@@ -66,11 +59,14 @@ int verification_contraintes(Csp *csp, int var_val[], int variable, int domaine)
     return 0;
 }
 
+/* Fonction qui affiche la grille des domaines pour toutes les variables */
 void affichage_domaines(Csp *csp){
     int i, j;
-    printf("\nGrille Dames : \n");
+    if (flag_pigeon == 1) printf("\nGrille Pigeons : \n");
+    else printf("\nGrille Dame : \n");
+	
     for (i = 0; i<csp->nb_variables; i++) {
-        printf("dame %d :   ", i);
+        printf("variable %d :   ", i);
         for (j = 0; j < csp->nb_valeurs; j++) {
             printf("%d  ", csp->domaines[i][j]);
         }
@@ -83,15 +79,14 @@ void affichage_domaines(Csp *csp){
 void Forward_Checking (Csp *csp){
     int var_courante = 0, domaine_courant, tour = 1, i, j;
     int domaines_disponibles[MAX_DOMAINES], var_val[MAX_VARIABLES];
-//    int cmpt_sol = 0;
 	
     init_tables_disponibles(csp, domaines_disponibles, var_val);
     
     do {
 		while(var_courante < csp->nb_variables && trouver_valeur(csp, 0) != -1){
 //			printf("---- TOUR %d ----\n", tour);
-			//~ printf("PB : var_courante %d\n", var_courante);
 			domaine_courant = trouver_valeur(csp, var_courante);
+			
 			/* si il n'y a plus de domaine ou ne verifie pas une contrainte */
 			if (domaine_courant == -1 || verification_contraintes(csp, var_val, var_courante, domaine_courant) == 1
 					|| domaines_libres(domaines_disponibles)==-1) {
@@ -108,9 +103,8 @@ void Forward_Checking (Csp *csp){
 							}
 						}
 					}
-					//~ printf("PB : [%d][%d] = %d\n", var_courante, domaine_courant, -tour);
 					/* si c'est la première ligne ou pas */
-					if (tour > 1) csp->domaines[var_courante][domaine_courant]  = -tour+1;
+					if (tour > 1) csp->domaines[var_courante][domaine_courant]  = -tour + 1;
 					else csp->domaines[var_courante][domaine_courant] = -tour;
 					
 					domaines_disponibles[domaine_courant] = 1;
@@ -124,42 +118,30 @@ void Forward_Checking (Csp *csp){
 //			afficher(solutions[cmpt_sol].p, "\nAffichage pile :");
 //			affichage_domaines(csp);
 //			printf("\n");
-	        //~ sleep(2);
-		} //fin while
-//		afficher(solutions[cmpt_sol].p, csp->nb_variables, "\nAffichage pile :");
-		
-		
-		
-		//~ solutions[cmpt_sol].p = pile;
-		//~ printf("solution[%d].p[0] = [%d %d]\n", cmpt_sol, solutions[cmpt_sol].p[0].variable, solutions[cmpt_sol].p[0].v
-        
-        
-        
-		
+		} //fin while	
+			
 		/* backtrack de un niveau pour pouvoir continuer*/
 		if (trouver_valeur(csp, 0)==-1) flag_all = 0;
-        else {
-            tour--;
-            var_courante--;
-            cmpt_sol ++;
+        	else {
+            		tour--;
+		    	var_courante--;
+		    	cmpt_sol ++;
+
+		    	copier(solutions[cmpt_sol-1].p, solutions[cmpt_sol].p);
+		    	pop(solutions[cmpt_sol].p);
+		    	domaine_courant = var_val[var_courante];
+		    	var_val[var_courante] = -1;
+
+		    	for (i = var_courante; i < csp->nb_variables; i++) {
+				for (j = 0; j < csp->nb_valeurs; j++) {
+			    		if (csp->domaines[i][j] + tour + 1 == 1 && i != 0) {
+						csp->domaines[i][j] = 1;
+			    		}
+				}
+		    	}
             
-            copier(solutions[cmpt_sol-1].p, solutions[cmpt_sol].p);
-            pop(solutions[cmpt_sol].p);
-            domaine_courant = var_val[var_courante];
-            var_val[var_courante] = -1;
-            
-            for (i = var_courante; i < csp->nb_variables; i++) {
-                for (j = 0; j < csp->nb_valeurs; j++) {
-                    if (csp->domaines[i][j] + tour + 1 == 1 && i != 0) {
-                        csp->domaines[i][j] = 1;
-                    }
-                }
-            }
-            
-        }					
-		// backtraquer de 1
-		// enregistrer la pile dans tableau pile
-    }while (flag_all == 1);
+        	}
+    } while (flag_all == 1);
     
     if (solutions[0].p[0].variable == -1){
         printf("Il n'y a pas de solution.\n");
@@ -167,11 +149,6 @@ void Forward_Checking (Csp *csp){
     }
     printf("les %d solutions sont :\n", cmpt_sol);
     for (i = 0; i < cmpt_sol; i++) afficher(solutions[i].p, csp->nb_variables, "***");
-	
-    
-	//~ if (var_courante < csp->nb_variables-1) printf("\n !! il n'y a pas de solution !!\n");
-	//~ else printf ("solution existante x)\n");
-	//~ return *csp;
 }
 
 
