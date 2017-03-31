@@ -8,7 +8,6 @@
 #include "pile.h"
 
 
-extern int sommet_courant;
 _Pile solutions[MAX_PILE];
 int flag_pigeon = 1;
 int flag_all = 0;

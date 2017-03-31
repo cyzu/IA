@@ -4,7 +4,7 @@
 #include "generateurDame.h"
 #include "pile.h"
 
-//extern Pile pile[MAX_PILE];
+
 extern _Pile solutions[MAX_PILE];
 extern int cmpt_sol;
 
@@ -137,15 +137,3 @@ void filtrage_dame(Csp *csp, int var_val[], int domaines_disponibles[], int vari
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
