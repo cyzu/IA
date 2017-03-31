@@ -19,3 +19,19 @@ int difference(int a, int b){
 	
 	return (m-n);
 }
+
+/* fonction qui renvoie le numéro de la variable ayant le minimum de valeur */
+int domaine_min(Csp *csp){
+    int i, j;
+    int compteur = 0, dom_min = csp->nb_valeurs, var_min = 0;
+    for (i = 0; i < csp->nb_variables; i++) {
+        for (j = 0; j < csp->nb_valeurs; j++) {
+            if (csp->domaines[i][j] > -1) compteur++;
+        }
+        if (dom_min > compteur){
+            dom_min = compteur;
+            var_min = i;
+        }
+    }
+    return var_min;
+}

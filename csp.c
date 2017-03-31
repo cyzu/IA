@@ -11,6 +11,7 @@
 _Pile solutions[MAX_PILE];
 int flag_pigeon = 1;
 int flag_all = 0;
+int flag_heurisique = 1;
 int cmpt_sol = 0;
 
 
@@ -78,20 +79,31 @@ void affichage_domaines(Csp *csp){
 void Forward_Checking (Csp *csp){
     int var_courante = 0, domaine_courant, tour = 1, i, j;
     int domaines_disponibles[MAX_DOMAINES], var_val[MAX_VARIABLES];
-	
+    
+    int h_ordre_var[MAX_VARIABLES], h_var = 0;
+    h_ordre_var[0] = 0;
+    
     init_tables_disponibles(csp, domaines_disponibles, var_val);
     
     do {
 		while(var_courante < csp->nb_variables && trouver_valeur(csp, 0) != -1){
 //			printf("---- TOUR %d ----\n", tour);
 			domaine_courant = trouver_valeur(csp, var_courante);
-			
+            
+            
+            
 			/* si il n'y a plus de domaine ou ne verifie pas une contrainte */
 			if (domaine_courant == -1 || verification_contraintes(csp, var_val, var_courante, domaine_courant) == 1
 					|| domaines_libres(domaines_disponibles)==-1) {
 
 					tour--;
-					var_courante--;
+                    if (flag_heurisique == 1) {
+                        h_ordre_var[h_var] = -1;
+                        h_var--;
+                        var_courante = h_ordre_var[h_var];
+                    }
+                    else var_courante--;
+                
 					pop(solutions[cmpt_sol].p);
 					domaine_courant = var_val[var_courante];
 					var_val[var_courante] = -1;
@@ -111,8 +123,15 @@ void Forward_Checking (Csp *csp){
 			else {
 				if (flag_pigeon == 1) filtrage_pigeon(csp, var_val, domaines_disponibles,var_courante, domaine_courant, tour);
 				else filtrage_dame(csp, var_val, domaines_disponibles, var_courante, domaine_courant, tour);
-				tour++;
-				var_courante++;
+				
+                tour++;
+                if (flag_heurisique == 1) {
+                    var_courante = domaine_min(csp);
+                    h_ordre_var[h_var] = var_courante;
+                    h_var++;
+                }
+                else var_courante++;
+                printf("prochaine var = %d\n", var_courante);
 			}
 //			afficher(solutions[cmpt_sol].p, "\nAffichage pile :");
 //			affichage_domaines(csp);
