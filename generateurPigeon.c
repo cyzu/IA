@@ -4,7 +4,8 @@
 #include "pile.h"
 
 
-extern _Pile solutions[MAX_PILE];
+extern Pile solutions[MAX_PILE];
+extern Pile *pile;
 extern int cmpt_sol;
 
 /** Initialisation des tableaux de CSP (tous à 0) **/
@@ -89,10 +90,10 @@ void generateur_Pigeon (Csp *csp, Relations *rel, int nombre){
 }
 
 
-/* fonction qui affecte à la variable, le domaine choisi puis filtre les domaines */
+/** fonction qui affecte à la variable, le domaine choisi puis filtre les domaines */
 void filtrage_pigeon(Csp *csp, int var_val[], int domaines_disponibles[], int variable, int domaine, int tour){
     int k;
-    push(solutions[cmpt_sol].p, variable, domaine);
+    push(pile, variable, domaine);
     var_val[variable] = domaine;
     
     domaines_disponibles[domaine] = domaines_disponibles[domaine] - tour -1;

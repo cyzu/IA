@@ -5,7 +5,8 @@
 #include "pile.h"
 
 
-extern _Pile solutions[MAX_PILE];
+extern Pile solutions[MAX_PILE];
+extern Pile *pile;
 extern int cmpt_sol;
 
 /** Initialisation de relation : cette fonction créée une nouvelle 
@@ -15,7 +16,7 @@ Relations* init_relation(){
     int i, j;
     for (i = 0; i < MAX_RELATIONS; i++){
 		for (j = 0; j < MAX_RELATIONS; j++){
-			rel.relation[i][j] = 0;
+			rel.relation[i][j] = -1;
 		}
 	} 
     return &rel;
@@ -24,7 +25,6 @@ Relations* init_relation(){
 /** Initialisation des tableaux de CSP (tous à vide) **/
 void init_csp_Dame(Csp *csp){
     int i,j;
-    
     csp->nb_variables = 0;
     csp->nb_valeurs = 0;
     
@@ -75,7 +75,7 @@ void generateur_Dame(Csp *csp, int nombre){
 				fprintf(file, "	(%d, %d) : ", i, j);
 				for (k = 0; k < nombre; k++){
 					for (l = 0; l < nombre; l++){
-						if (difference(i, j)!=difference(k, l) && k!=l){
+						if (difference(i, j)!=difference(k, l) && k!=l){							
 							csp->contraintes[i][j]->relation[k][l] = 1;
 							fprintf(file, "(%d, %d) ",k,l);
 						}
@@ -92,9 +92,9 @@ void generateur_Dame(Csp *csp, int nombre){
 /** fonction qui affecte le domaine à la variable puis filtre les domaines des autres dames */
 void filtrage_dame(Csp *csp, int var_val[], int domaines_disponibles[], int variable, int domaine, int tour){
     int k, i, j;
-    push(solutions[cmpt_sol].p, variable, domaine);
-    var_val[variable] = domaine;
     
+    push(pile, variable, domaine);
+    var_val[variable] = domaine;
     domaines_disponibles[domaine] = -tour;
     
     /* filtrage de colonne */

@@ -1,22 +1,23 @@
-#ifndef __PILE_
-#define __PILE_
+#ifndef H_PILE
+#define H_PILE
 
-#define MAX_PILE 200
+#define MAX_PILE    100
 
-int sommet_courant;
-
-typedef struct{
-	int variable, valeur;	
-}Pile;
+typedef struct Element {
+    int variable;
+    int valeur;
+    struct Element *suivant;
+} Element;
 
 typedef struct {
-	Pile p[MAX_PILE];
-} _Pile;
+    Element *p;
+} Pile;
 
-void init_pile(_Pile solutions[]);
-void push(Pile pile[], int var, int val);
-Pile pop(Pile pile[]);
-void afficher(Pile pile[],int k, const char c[]);
-void copier(Pile pile1[], Pile pile2[]);
+
+Pile *init_pile();
+void push(Pile *pile, int var, int val);
+void pop(Pile *pile);
+void afficherPile(Pile *pile, const char *c);
+void copier(Pile *pile1, Pile *pile2);
 
 #endif

@@ -1,9 +1,9 @@
 #ifndef __CSP_
 #define __CSP_
 
-#define MAX_VARIABLES 100
-#define MAX_RELATIONS 50
-#define MAX_DOMAINES 50
+#define MAX_VARIABLES 	100
+#define MAX_RELATIONS 	100
+#define MAX_DOMAINES 	100
 
 
 typedef struct {
@@ -23,7 +23,11 @@ int trouver_valeur(Csp *csp, int var);
 int verification_contraintes(Csp *csp, int var_val[], int variable, int domaine);
 
 void affichage_domaines(Csp *csp);
+
+void Backtrack(Csp *csp, int var_val[], int var_courante, int domaine_courant, int tour);
 void Forward_Checking (Csp *csp);
+void Back_Jumping (Csp *csp);
+
 int main ();
 
 #endif
