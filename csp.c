@@ -51,15 +51,24 @@ int trouver_valeur(Csp *csp, int var){
 int verification_contraintes(Csp *csp, int var_val[], int variable, int domaine){
     int i;
     for (i = variable; i > -1; i--) {
-        if (var_val[i] >= 0){
+        if (var_val[i] > -1){
             if (csp->contraintes[i][variable] != NULL){
-                if (csp->contraintes[i][variable]->relation[var_val[i]][domaine] == 0){
+                if (csp->contraintes[i][variable]->relation[var_val[i]][domaine] == -1){
 					return i;
 				}
             }
         }
     }
     return -1;
+}
+
+void affichage_varval(int varval[]){
+    int i;
+    printf("varval : ");
+    for (i = 0; i < 10; i++) {
+        printf("[%d]=%d, ", i, varval[i]);
+    }
+    printf("\n");
 }
 
 /* Fonction qui affiche la grille des domaines pour toutes les variables */
@@ -113,9 +122,7 @@ void Forward_Checking (Csp *csp){
 			domaine_courant = trouver_valeur(csp, var_courante);
 
 			/* si il n'y a plus de domaine ou ne verifie pas une contrainte */
-			if (domaine_courant == -1 || 
-				verification_contraintes(csp, var_val, var_courante, domaine_courant) == 1 || 
-				domaines_libres(domaines_disponibles)==-1) {
+			if (domaine_courant == -1 || domaines_libres(domaines_disponibles) == -1) {
                 
 					tour--;
                     var_courante--;
@@ -160,20 +167,23 @@ void Back_Jumping(Csp *csp){
 	int domaines_disponibles[MAX_DOMAINES],var_val[MAX_DOMAINES], tour = 1;
 	int i ,j, k;
 	
+    pile = init_pile();
 	init_tables_disponibles(csp, domaines_disponibles, var_val);
 	
 	do {
 	
 		while (var_courante < csp->nb_variables && trouver_valeur(csp, 0) != -1){
+//            printf("\n------TOUR %d------\n", tour);
 			domaine_courant = trouver_valeur(csp, var_courante);
-			
+//            printf("var %d | domaine %d\n", var_courante, domaine_courant);
 			if (domaine_courant == -1){
+//                printf("pas de domaine (-1)..\n");
 				tour --;
 				var_courante --;
 				
 				domaine_courant = var_val[var_courante];
 				var_val[var_courante] = -1;
-				pop(&solutions[cmpt_sol]);
+				pop(pile);
 				
 				for (i = var_courante; i < csp->nb_variables; i++) {
 					for (j = 0; j < csp->nb_valeurs; j++) {
@@ -187,8 +197,9 @@ void Back_Jumping(Csp *csp){
 				else csp->domaines[var_courante][domaine_courant] = -tour;	
 			}
 			else {
-				if (tour > 1) var_contrainte  = verification_contraintes(csp, var_val, var_courante, domaine_courant); 
+				var_contrainte  = verification_contraintes(csp, var_val, var_courante, domaine_courant);
 				if (var_contrainte != -1){
+//                    printf("contrainte violée avec var %d\n", var_contrainte);
 					/* il y a une contrainte violée */
 					if (trouver_valeur(csp, var_courante) != -1) {
 						csp->domaines[var_courante][domaine_courant] = -tour;
@@ -197,7 +208,7 @@ void Back_Jumping(Csp *csp){
 						
 						for (i = var_courante; i >= var_contrainte; i--){
 							var_val[i] = -1;
-							pop (&solutions[cmpt_sol]);
+							pop (pile);
 							
 							for (j = var_courante; j < csp->nb_variables; j++) {
 								for (k = 0; k < csp->nb_valeurs; k++) {
@@ -215,7 +226,8 @@ void Back_Jumping(Csp *csp){
 					}
 				} 
 				else {
-					push (&solutions[cmpt_sol], var_courante, domaine_courant);
+//                    printf("push, ok!\n");
+					push (pile, var_courante, domaine_courant);
 					
 					var_val[var_courante] = domaine_courant;
 					domaines_disponibles[domaine_courant] = 0;
@@ -224,34 +236,32 @@ void Back_Jumping(Csp *csp){
 					var_courante ++;
 				}
 			}
+//            affichage_domaines(csp);
+//            affichage_varval(var_val);
+//            afficherPile(pile, "");
 		}//fin while
 		
-		if (trouver_valeur(csp, 0)==-1) flag_all = 0;
+        copier(pile, &solutions[cmpt_sol]);
+        /* backtrack de un niveau pour pouvoir continuer*/
+        if (trouver_valeur(csp, 0)==-1 || flag_all == 0) flag_all = 0;
         else {
-           		tour--;
-		    	var_courante--;
-		    	cmpt_sol ++;
-
-		    	//~ copier(solutions[cmpt_sol-1].p, solutions[cmpt_sol].p);
+            tour--;
+            var_courante--;
+            cmpt_sol ++;
             
-		    	domaine_courant = var_val[var_courante];
-                Backtrack(csp, var_val, var_courante, domaine_courant, tour);
+            domaine_courant = var_val[var_courante];
+            Backtrack(csp, var_val, var_courante, domaine_courant, tour);
         }
-	}while (flag_all == 1);
-	
-	if (solutions[0].p->variable == -1){
-        printf("Il n'y a pas de solution.\n");
+    } while (flag_all == 1);
+    
+    if (!solutions[0].p){
+        cmpt_sol = -1;
         return;
     }
-    printf("les %d solutions sont :\n", cmpt_sol);
-    for (i = 0; i < cmpt_sol; i++) afficherPile(&solutions[i], "***");
-	
-	
 }
 
 int main (){
 	Csp csp;
-	Relations rel;
 	int nombre, algo, i, flag_affichage;
     
     float temps_exec;
@@ -267,13 +277,15 @@ int main (){
 	scanf("%d", &flag_all);
 	printf("\n");
 	if (flag_pigeon == 1){
-		csp = init_csp_Pigeon(&rel);
-		generateur_Pigeon(&csp, &rel, nombre);
+		init_csp_Pigeon(&csp);
+		generateur_Pigeon(&csp, nombre);
 	}
 	else {
 		init_csp_Dame(&csp);
 		generateur_Dame(&csp, nombre);
 	}
+    
+    
     for (i = 0; i < MAX_PILE; i++) solutions[i] = *init_pile();
     
     debut = clock();

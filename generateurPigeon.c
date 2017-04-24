@@ -8,30 +8,20 @@ extern Pile solutions[MAX_PILE];
 extern Pile *pile;
 extern int cmpt_sol;
 
-/** Initialisation des tableaux de CSP (tous à 0) **/
-Csp init_csp_Pigeon (Relations *rel){
-    int i,j;
-    Csp csp;
+/** Initialisation des tableaux de CSP (tous à vide) **/
+void init_csp_Pigeon(Csp *csp){
+    int i,j,k,l;
+    csp->nb_variables = 0;
+    csp->nb_valeurs = 0;
     
-    csp.nb_variables = 0;
-    csp.nb_valeurs = 0;
-    
-    /** initialiser les relations à 0 */
     for (i = 0; i < MAX_RELATIONS; i++){
-        for (j = 0; j < MAX_RELATIONS; j++) rel->relation[i][j] = 0;
+        for (j = 0; j < MAX_RELATIONS; j++){
+            csp->contraintes[i][j] = malloc(MAX_VARIABLES * MAX_VARIABLES * sizeof(int));
+        }
     }
-    
-    /** si i==j, il n'y a pas de contraintes donc je mets les contraintes à NULL */
-    for (i = 0; i < MAX_VARIABLES; i++) {
-        for (j = 0; j < MAX_VARIABLES; j++){
-            if (i != j) csp.contraintes[i][j] = rel;
-            else csp.contraintes[i][j] = NULL;
-        }	
-    }
-    return csp;
 }
 
-void generateur_Pigeon (Csp *csp, Relations *rel, int nombre){
+void generateur_Pigeon (Csp *csp, int nombre){
 	int i = 0, j = 0, k = 0, l = 0;
 	
 	FILE* file = fopen("generateur_pigeon.txt", "w+");
@@ -48,21 +38,12 @@ void generateur_Pigeon (Csp *csp, Relations *rel, int nombre){
 	/** initialisation des domaines */
 	fprintf(file, "générateur de pigeons : %d pigeons\n\nvariable : domaines\n", nombre);
 	for (i = 0; i < nombre; i++){
-		fprintf(file, "	%d : {", i);
+		fprintf(file, "	%d = { ", i);
 		for (j = 0; j < nombre -1; j++){
 			csp->domaines[i][j] = 1;
 			fprintf(file, "%d ", j);
 		}
 		fprintf(file, "}\n");
-	}
-	
-	
-	/** initialisation des relations : 2 variables peuvent s'affecter à 2 valeurs différentes (i!=j) */
-	for (i = 0; i < nombre-1; i++){
-		for (j = 0; j < nombre-1; j++){
-			if (i != j) rel->relation[i][j] = 1;
-			else rel->relation[i][j] = 0;
-		}
 	}
 	
 	/** 
@@ -72,21 +53,23 @@ void generateur_Pigeon (Csp *csp, Relations *rel, int nombre){
 	 * */	 
 	 fprintf(file, "\ncontraintes (variable 1, variable 2) : tuples possibles\n");
 	 for (i = 0; i < nombre; i++) {
-		 for (j = 0; j < nombre; j++){
+		 for (j = i+1; j < nombre; j++){
 			 if (i != j){
-				 csp->contraintes[i][j] = rel;
 				 fprintf(file, "	(%d, %d) : ", i, j);
 				 for (k = 0; k < nombre -1; k++){
 					 for (l = 0; l < nombre -1; l++){
-						 if (csp->contraintes[i][j]->relation[k][l] == 1)
+                         if (k != l) {
+                            csp->contraintes[i][j]->relation[k][l] = 1;
 							fprintf(file, "(%d, %d) ",k,l);
+                         }
+                         else csp->contraintes[i][j]->relation[k][l] = -1;
 					 }
 				 }
 				 fprintf(file, "\n");
 			 }
 	 	 }	
 	 }
-	fclose(file);
+	fclose(file);    
 }
 
 

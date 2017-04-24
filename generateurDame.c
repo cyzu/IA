@@ -9,31 +9,16 @@ extern Pile solutions[MAX_PILE];
 extern Pile *pile;
 extern int cmpt_sol;
 
-/** Initialisation de relation : cette fonction créée une nouvelle 
- * matrice Relations à chaque appel */
-Relations* init_relation(){
-    Relations rel;
-    int i, j;
-    for (i = 0; i < MAX_RELATIONS; i++){
-		for (j = 0; j < MAX_RELATIONS; j++){
-			rel.relation[i][j] = -1;
-		}
-	} 
-    return &rel;
- }
 
 /** Initialisation des tableaux de CSP (tous à vide) **/
 void init_csp_Dame(Csp *csp){
-    int i,j;
+    int i,j,k,l;
     csp->nb_variables = 0;
     csp->nb_valeurs = 0;
-    
-    /** si i==j, il n'y a pas de contraintes donc 
-     * je mets les contraintes à NULL */
-    for (i = 0; i < MAX_VARIABLES; i++) {
-            for (j = 0; j < MAX_VARIABLES; j++){
-            if (i != j) csp->contraintes[i][j] = init_relation();
-            else csp->contraintes[i][j] = NULL;
+
+    for (i = 0; i < MAX_RELATIONS; i++){
+        for (j = 0; j < MAX_RELATIONS; j++){
+            csp->contraintes[i][j] = malloc(MAX_VARIABLES * MAX_VARIABLES * sizeof(int));
         }
     }
 }
@@ -56,7 +41,7 @@ void generateur_Dame(Csp *csp, int nombre){
 	/** initialisation des domaines */
 	fprintf(file, "générateur de dames : %d dames - grille %dx%d\n\nvariable : domaines\n", nombre, nombre, nombre);
 	for (i = 0; i < nombre; i++){
-		fprintf(file, "	%d : {", i);
+		fprintf(file, "	%d = { ", i);
 		for (j = 0; j < nombre; j++){
 			csp->domaines[i][j] = 1;
 			fprintf(file, "%d ", j);
@@ -67,25 +52,22 @@ void generateur_Dame(Csp *csp, int nombre){
 	/** le domaine[k][l] == 1 lorsque 2 variables peuvent prendre 
 	 * les valeurs k et l respectivement */
 	fprintf(file, "\ncontraintes (variable 1, variable 2) : tuples possibles\n");
-	for (i = 0; i < nombre; i++){
-		for (j = 0; j < nombre; j++){
-            
-			/* Si il y a une contrainte entre i et j */
-			if (csp->contraintes[i][j] != NULL){
-				fprintf(file, "	(%d, %d) : ", i, j);
-				for (k = 0; k < nombre; k++){
-					for (l = 0; l < nombre; l++){
-						if (difference(i, j)!=difference(k, l) && k!=l){							
-							csp->contraintes[i][j]->relation[k][l] = 1;
-							fprintf(file, "(%d, %d) ",k,l);
-						}
+    for (i = 0; i < nombre; i++) {
+        for (j = i+1; j < nombre; j++) {
+            fprintf(file, "(%d, %d) : ",i,j);
+            for (k = 0; k < nombre; k++) {
+                for (l = 0; l < nombre; l++) {
+                    if (difference(i,j)!=difference(k,l) && (k!=l)) {
+                        csp->contraintes[i][j]->relation[k][l] = 1;
+                        fprintf(file, "(%d, %d) ",k,l);
                     }
+                    else csp->contraintes[i][j]->relation[k][l] = -1;
                 }
-                fprintf(file, "\n");
             }
-		}
-	}
-	fclose(file);
+            fprintf(file, "\n");
+        }
+    }
+    fclose(file);
 }
 
 

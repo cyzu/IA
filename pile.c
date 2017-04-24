@@ -60,5 +60,3 @@ void copier(Pile *pile1, Pile *pile2){
 	}
 	free(tmp);
 }
-
-
