@@ -7,12 +7,11 @@
 #include "util.h"
 #include "pile.h"
 
-
 Pile solutions[MAX_PILE];
 Pile *pile;
 int flag_pigeon = 1;
-int flag_all = 0;
-int cmpt_sol = 0;
+int flag_all    = 0;
+int cmpt_sol    = 0;
 
 
 /* fonction qui initialise les tables domaines et variables disponibles à 1 */
@@ -142,7 +141,10 @@ void Forward_Checking (Csp *csp){
 			//~ affichage_domaines(csp);
 			//~ afficherPile(pile, "**pile");
 		} //fin while
-		
+        if (cmpt_sol > MAX_PILE){
+            printf("Capacité stockage de pile dépassée !\n");
+            return;
+        }
 		copier(pile, &solutions[cmpt_sol]);
 		/* backtrack de un niveau pour pouvoir continuer*/
 		if (trouver_valeur(csp, 0)==-1 || flag_all == 0) flag_all = 0;
@@ -240,7 +242,10 @@ void Back_Jumping(Csp *csp){
 //            affichage_varval(var_val);
 //            afficherPile(pile, "");
 		}//fin while
-		
+        if (cmpt_sol > MAX_PILE){
+            printf("Capacité stockage de pile dépassée !\n");
+            return;
+        }
         copier(pile, &solutions[cmpt_sol]);
         /* backtrack de un niveau pour pouvoir continuer*/
         if (trouver_valeur(csp, 0)==-1 || flag_all == 0) flag_all = 0;
@@ -294,7 +299,7 @@ int main (){
 	else Back_Jumping(&csp);
 
     fin = clock();
-    temps_exec = (float)(fin-debut)/60;
+    temps_exec = (float)(fin-debut)/3600;
    
 	printf("-------------------------------------------\n");
 	if (cmpt_sol == -1) printf("Il n'y a pas de solution.\n");

@@ -1,7 +1,7 @@
 #ifndef H_PILE
 #define H_PILE
 
-#define MAX_PILE    100
+#define MAX_PILE    1000
 
 typedef struct Element {
     int variable;
