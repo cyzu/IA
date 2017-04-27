@@ -5,35 +5,20 @@
 #include "pile.h"
 
 
-extern _Pile solutions[MAX_PILE];
+extern Pile solutions[MAX_PILE];
+extern Pile *pile;
 extern int cmpt_sol;
 
-/** Initialisation de relation : cette fonction créée une nouvelle 
- * matrice Relations à chaque appel */
-Relations* init_relation(){
-    Relations rel;
-    int i, j;
-    for (i = 0; i < MAX_RELATIONS; i++){
-		for (j = 0; j < MAX_RELATIONS; j++){
-			rel.relation[i][j] = 0;
-		}
-	} 
-    return &rel;
- }
 
 /** Initialisation des tableaux de CSP (tous à vide) **/
 void init_csp_Dame(Csp *csp){
-    int i,j;
-    
+    int i,j,k,l;
     csp->nb_variables = 0;
     csp->nb_valeurs = 0;
-    
-    /** si i==j, il n'y a pas de contraintes donc 
-     * je mets les contraintes à NULL */
-    for (i = 0; i < MAX_VARIABLES; i++) {
-            for (j = 0; j < MAX_VARIABLES; j++){
-            if (i != j) csp->contraintes[i][j] = init_relation();
-            else csp->contraintes[i][j] = NULL;
+
+    for (i = 0; i < MAX_RELATIONS; i++){
+        for (j = 0; j < MAX_RELATIONS; j++){
+            csp->contraintes[i][j] = malloc(MAX_VARIABLES * MAX_VARIABLES * sizeof(int));
         }
     }
 }
@@ -56,7 +41,7 @@ void generateur_Dame(Csp *csp, int nombre){
 	/** initialisation des domaines */
 	fprintf(file, "générateur de dames : %d dames - grille %dx%d\n\nvariable : domaines\n", nombre, nombre, nombre);
 	for (i = 0; i < nombre; i++){
-		fprintf(file, "	%d : {", i);
+		fprintf(file, "	%d = { ", i);
 		for (j = 0; j < nombre; j++){
 			csp->domaines[i][j] = 1;
 			fprintf(file, "%d ", j);
@@ -67,44 +52,51 @@ void generateur_Dame(Csp *csp, int nombre){
 	/** le domaine[k][l] == 1 lorsque 2 variables peuvent prendre 
 	 * les valeurs k et l respectivement */
 	fprintf(file, "\ncontraintes (variable 1, variable 2) : tuples possibles\n");
-	for (i = 0; i < nombre; i++){
-		for (j = 0; j < nombre; j++){
-            
-			/* Si il y a une contrainte entre i et j */
-			if (csp->contraintes[i][j] != NULL){
-				fprintf(file, "	(%d, %d) : ", i, j);
-				for (k = 0; k < nombre; k++){
-					for (l = 0; l < nombre; l++){
-						if (difference(i, j)!=difference(k, l) && k!=l){
-							csp->contraintes[i][j]->relation[k][l] = 1;
-							fprintf(file, "(%d, %d) ",k,l);
-						}
+    for (i = 0; i < nombre; i++) {
+        for (j = i+1; j < nombre; j++) {
+            fprintf(file, "(%d, %d) : ",i,j);
+            for (k = 0; k < nombre; k++) {
+                for (l = 0; l < nombre; l++) {
+                    if (difference(i,j)!=difference(k,l) && (k!=l)) {
+                        csp->contraintes[i][j]->relation[k][l] = 1;
+                        fprintf(file, "(%d, %d) ",k,l);
                     }
+                    else csp->contraintes[i][j]->relation[k][l] = -1;
                 }
-                fprintf(file, "\n");
             }
-		}
-	}
-	fclose(file);
+            fprintf(file, "\n");
+        }
+    }
+    fclose(file);
 }
 
 
 /** fonction qui affecte le domaine à la variable puis filtre les domaines des autres dames */
 void filtrage_dame(Csp *csp, int var_val[], int domaines_disponibles[], int variable, int domaine, int tour){
     int k, i, j;
-    push(solutions[cmpt_sol].p, variable, domaine);
-    var_val[variable] = domaine;
     
+    push(pile, variable, domaine);
+    var_val[variable] = domaine;
     domaines_disponibles[domaine] = -tour;
     
+//    csp->domaines[variable][domaine] = -tour;
+    
     /* filtrage de colonne */
-    for (k = variable+1; k < csp->nb_variables; k++){
+//    printf("filtrage colonne\n");
+//    for (k = variable+1; k < csp->nb_variables; k++){
+//        if (csp->domaines[k][domaine] == 1){
+//            csp->domaines[k][domaine] = -tour;
+//        }
+//    }
+    for (k = 0; k < csp->nb_variables; k++) {
         if (csp->domaines[k][domaine] == 1){
+//            printf("k = %d\n", k);
             csp->domaines[k][domaine] = -tour;
         }
     }
     /*filtrage de diagonales */
     if (domaine == 0){
+//        printf("filtrage diagonal \\ \n");
         k = domaine+1;
         for (i = variable+1; i < csp->nb_variables; i++) {
             if (csp->domaines[i][k] == 1) {
@@ -112,8 +104,16 @@ void filtrage_dame(Csp *csp, int var_val[], int domaines_disponibles[], int vari
             }
             k++;
         }
+        k = domaine+1;
+        for (i = variable-1; i >= 0; i--) {
+            if (csp->domaines[i][k] == 1) {
+                csp->domaines[i][k] = -tour;
+            }
+            k++;
+        }
     }
     else if (domaine == csp->nb_variables-1){
+//        printf("filtrage diagonal / \n");
         k = domaine-1;
         for (i = variable+1; i < csp->nb_valeurs; i++) {
             if (csp->domaines[i][k] == 1) {
@@ -121,8 +121,16 @@ void filtrage_dame(Csp *csp, int var_val[], int domaines_disponibles[], int vari
             }
             k--;
         }
+        k = domaine-1;
+        for (i = variable-1; i >= 0; i--) {
+            if (csp->domaines[i][k] == 1) {
+                csp->domaines[i][k] = -tour;
+            }
+            k--;
+        }
     }
     else {
+//        printf("filtrage les deux (au milieu)\n");
         k = domaine+1;
         j = domaine-1;
         for (i = variable+1; i < csp->nb_variables; i++) {
@@ -135,5 +143,22 @@ void filtrage_dame(Csp *csp, int var_val[], int domaines_disponibles[], int vari
             k++;
             j--;
         }
+        k = domaine+1;
+        j = domaine-1;
+        for (i = variable-1; i >= 0; i--) {
+            if (csp->domaines[i][k] == 1) {
+                csp->domaines[i][k] = -tour;
+            }
+            if (csp->domaines[i][j] == 1) {
+                csp->domaines[i][j] = -tour;
+            }
+            k++;
+            j--;
+        }
     }
+    /* remettre les domaines deja instanciées en 1 */
+//    for (i = 0; i < csp->nb_variables; i++) {
+//        if (var_val[i] > -1) csp->domaines[i][var_val[i]] = 1;
+//    }
+//    csp->domaines[variable][domaine] = 1;
 }

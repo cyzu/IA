@@ -1,13 +1,13 @@
 # Makefile Intelligence Artificielle 2016/2017
 #
-# @author : Chloé Bensoussan, Deguene Ndour
+# @author : Chloé Bensoussan
 # Université Aix-Marseille
 
 SHELL = /bin/bash
-CC    = gcc
+CC    = gcc -g
 
 LIBS = -lm 
-CCFLAGS = -Wall -ggdb
+CCFLAGS = -Wall -w -ggdb
 
 OBJ = generateurPigeon.o generateurDame.o util.o pile.o
 
